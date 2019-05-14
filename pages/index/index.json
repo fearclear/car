@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "home": "/pages/home/index",
+    "order": "/pages/order/index",
+    "user": "/pages/user/index"
+  }
+}

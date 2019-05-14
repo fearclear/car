@@ -1,0 +1,65 @@
+<scroll-view scroll-y class="scrollPage">
+  <view class="flex flex-sub bg-white padding solid-bottom">
+    <view class="cu-avatar round lg" style="background-image:url({{userInfo.avatarUrl}});"></view>
+    <view class="margin-left">
+      <view class="text-xl">{{userInfo.nickName||'未登录'}}</view>
+      <view class="text-df">
+        <view wx:if="{{type===1}}"><text class="cuIcon-taxi margin-right-xs"></text><text>车主</text></view>
+        <view wx:if="{{type===2}}"><text class="cuIcon-people margin-right-xs"></text><text>乘客</text></view>
+        <view wx:if="{{type===3}}"><text class="cuIcon-friendfamous margin-right-xs"></text><text class="cuIcon-vip margin-right-xs"></text><text>系统管理员</text></view>
+        <view wx:if="{{type===4}}"><text class="cuIcon-friendfamous margin-right-xs"></text><text>管理员</text></view>
+      </view>
+    </view>
+    <view class="flex-sub text-right toggle">
+      <text>切换身份</text>
+      <text class="cuIcon-peoplelist"></text>
+    </view>
+  </view>
+  <view class="padding flex text-center text-grey bg-white shadow-blur">
+    <view class="flex flex-sub flex-direction solid-right">
+      <view class="text-xxl text-orange">{{11}}</view>
+      <view class="margin-top-sm">
+        <text class="cuIcon-edit"></text>
+        我的待办
+      </view>
+    </view>
+    <view class="flex flex-sub flex-direction">
+      <view class="text-xxl text-blue">{{22}}</view>
+      <view class="margin-top-sm">
+        <text class="cuIcon-list"></text>
+        未出行流程
+      </view>
+    </view>
+  </view>
+  <view class="cu-list menu card-menu margin-top-lg margin-bottom-lg shadow-lg radius">
+    <view class="cu-item arrow">
+      <navigator class="content" url="/pages/user/userInfo/index" hover-class="none">
+        <text class="cuIcon-profile text-grey"></text>
+        <text class="text-grey">个人信息</text>
+      </navigator>
+    </view>
+    <view class="cu-item arrow">
+      <navigator class="content" url="/pages/user/userInfo/index" hover-class="none">
+        <text class="cuIcon-formfill text-green"></text>
+        <text class="text-grey">更新日志</text>
+      </navigator>
+    </view>
+    <view class="cu-item arrow">
+      <view class="content" bindtap="showQrcode">
+        <text class="cuIcon-appreciatefill text-red"></text>
+        <text class="text-grey">赞赏支持</text>
+      </view>
+    </view>
+    <view class="cu-item arrow">
+      <button class="cu-btn content" open-type="feedback">
+        <text class="cuIcon-writefill text-cyan"></text>
+        <text class="text-grey">意见反馈</text>
+      </button>
+    </view>
+  </view>
+  <view wx:if="{{!userInfo.nickName}}" class="padding flex flex-direction">
+    <button class="cu-btn bg-green lg" open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">
+      登录
+    </button>
+  </view>
+</scroll-view>

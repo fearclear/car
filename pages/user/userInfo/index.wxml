@@ -1,0 +1,27 @@
+<cu-custom bgColor="bg-gradual-blue" isBack="{{true}}">
+	<view slot="backText">返回</view>
+	<view slot="content">个人信息</view>
+</cu-custom>
+<form>
+	<view class="cu-form-group">
+		<view class="title">昵称</view>
+    <text>{{userInfo.nickName}}</text>
+	</view>
+	<view class="cu-form-group">
+		<view class="title">性别</view>
+		<text>{{userInfo.gender===1?"男":"女"}}</text>
+	</view>
+	<view class="cu-form-group">
+		<view class="title">手机号</view>
+		<text>18712345162</text>
+    <button class="cu-btn bg-green" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">获取</button>
+	</view>
+	<view class="cu-form-group">
+		<view class="title">日期选择</view>
+		<picker mode="date" value="{{date}}" bindchange="DateChange">
+			<view class="picker">
+				{{date||'请选择'}}
+			</view>
+		</picker>
+  </view>
+</form>
