@@ -1,20 +1,35 @@
 {
   "pages": [
-    "pages/index/index",
     "pages/home/index",
     "pages/order/index",
     "pages/user/index",
     "pages/user/userInfo/index"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "ColorUI",
-    "navigationStyle": "custom",
-    "navigationBarTextStyle": "white"
+    "navigationBarBackgroundColor": "#0081ff",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "微信接口功能演示",
+    "backgroundColor": "#eeeeee",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/order/index",
+        "text": "地图"
+      },
+      {
+        "pagePath": "pages/user/index",
+        "text": "个人中心"
+      }
+    ]
   },
   "usingComponents": {
-    "cu-custom": "/colorui/components/cu-custom"
+    "cu-custom": "/libs/colorui/components/cu-custom"
   },
   "sitemapLocation": "sitemap.json",
   "permission": {

@@ -1,3 +1,6 @@
 <view>
-  <text>order</text>
+  <view class="map_container">
+    <!-- 定义页面结构，可以使用地图组件也能使用其他组件 -->
+    <map id="map" longitude="{{longitude}}" latitude="{{latitude}}" scale="14" show-location="true" markers="{{markers}}" style="width: 100%; height: 300px;" bindmarkertap="makertap"></map>
+  </view>
 </view>

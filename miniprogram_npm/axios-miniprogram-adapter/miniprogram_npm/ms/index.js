@@ -4,7 +4,7 @@ var __DEFINE__ = function(modId, func, req) { var m = { exports: {} }; __MODS__[
 var __REQUIRE__ = function(modId, source) { if(!__MODS__[modId]) return require(source); if(!__MODS__[modId].status) { var m = { exports: {} }; __MODS__[modId].status = 1; __MODS__[modId].func(__MODS__[modId].req, m, m.exports); if(typeof m.exports === "object") { Object.keys(m.exports).forEach(function(k) { __MODS__[modId].m.exports[k] = m.exports[k]; }); if(m.exports.__esModule) Object.defineProperty(__MODS__[modId].m.exports, "__esModule", { value: true }); } else { __MODS__[modId].m.exports = m.exports; } } return __MODS__[modId].m.exports; };
 var __REQUIRE_WILDCARD__ = function(obj) { if(obj && obj.__esModule) { return obj; } else { var newObj = {}; if(obj != null) { for(var k in obj) { if (Object.prototype.hasOwnProperty.call(obj, k)) newObj[k] = obj[k]; } } newObj.default = obj; return newObj; } };
 var __REQUIRE_DEFAULT__ = function(obj) { return obj && obj.__esModule ? obj.default : obj; };
-__DEFINE__(1562164525186, function(require, module, exports) {
+__DEFINE__(1562164525150, function(require, module, exports) {
 /**
  * Helpers.
  */
@@ -13,6 +13,7 @@ var s = 1000;
 var m = s * 60;
 var h = m * 60;
 var d = h * 24;
+var w = d * 7;
 var y = d * 365.25;
 
 /**
@@ -56,7 +57,7 @@ function parse(str) {
   if (str.length > 100) {
     return;
   }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
+  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
     str
   );
   if (!match) {
@@ -71,6 +72,10 @@ function parse(str) {
     case 'yr':
     case 'y':
       return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
     case 'days':
     case 'day':
     case 'd':
@@ -113,16 +118,17 @@ function parse(str) {
  */
 
 function fmtShort(ms) {
-  if (ms >= d) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
     return Math.round(ms / d) + 'd';
   }
-  if (ms >= h) {
+  if (msAbs >= h) {
     return Math.round(ms / h) + 'h';
   }
-  if (ms >= m) {
+  if (msAbs >= m) {
     return Math.round(ms / m) + 'm';
   }
-  if (ms >= s) {
+  if (msAbs >= s) {
     return Math.round(ms / s) + 's';
   }
   return ms + 'ms';
@@ -137,28 +143,32 @@ function fmtShort(ms) {
  */
 
 function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
 }
 
 /**
  * Pluralization helper.
  */
 
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
 }, function(modId) {var map = {}; return __REQUIRE__(map[modId], modId); })
-return __REQUIRE__(1562164525186);
+return __REQUIRE__(1562164525150);
 })()
 //# sourceMappingURL=index.js.map

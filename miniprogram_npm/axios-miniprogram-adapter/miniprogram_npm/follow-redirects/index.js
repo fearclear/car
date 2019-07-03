@@ -4,8 +4,9 @@ var __DEFINE__ = function(modId, func, req) { var m = { exports: {} }; __MODS__[
 var __REQUIRE__ = function(modId, source) { if(!__MODS__[modId]) return require(source); if(!__MODS__[modId].status) { var m = { exports: {} }; __MODS__[modId].status = 1; __MODS__[modId].func(__MODS__[modId].req, m, m.exports); if(typeof m.exports === "object") { Object.keys(m.exports).forEach(function(k) { __MODS__[modId].m.exports[k] = m.exports[k]; }); if(m.exports.__esModule) Object.defineProperty(__MODS__[modId].m.exports, "__esModule", { value: true }); } else { __MODS__[modId].m.exports = m.exports; } } return __MODS__[modId].m.exports; };
 var __REQUIRE_WILDCARD__ = function(obj) { if(obj && obj.__esModule) { return obj; } else { var newObj = {}; if(obj != null) { for(var k in obj) { if (Object.prototype.hasOwnProperty.call(obj, k)) newObj[k] = obj[k]; } } newObj.default = obj; return newObj; } };
 var __REQUIRE_DEFAULT__ = function(obj) { return obj && obj.__esModule ? obj.default : obj; };
-__DEFINE__(1562164525182, function(require, module, exports) {
+__DEFINE__(1562164525146, function(require, module, exports) {
 var url = require("url");
+var URL = url.URL;
 var http = require("http");
 var https = require("https");
 var assert = require("assert");
@@ -30,6 +31,8 @@ function RedirectableRequest(options, responseCallback) {
   Writable.call(this);
   options.headers = options.headers || {};
   this._options = options;
+  this._ended = false;
+  this._ending = false;
   this._redirectCount = 0;
   this._redirects = [];
   this._requestBodyLength = 0;
@@ -76,6 +79,11 @@ RedirectableRequest.prototype = Object.create(Writable.prototype);
 
 // Writes buffered data to the current native request
 RedirectableRequest.prototype.write = function (data, encoding, callback) {
+  // Writing is not allowed if end has been called
+  if (this._ending) {
+    throw new Error("write after end");
+  }
+
   // Validate input and shift parameters if necessary
   if (!(typeof data === "string" || typeof data === "object" && ("length" in data))) {
     throw new Error("data should be a string, Buffer or Uint8Array");
@@ -118,11 +126,20 @@ RedirectableRequest.prototype.end = function (data, encoding, callback) {
     encoding = null;
   }
 
-  // Write data and end
-  var currentRequest = this._currentRequest;
-  this.write(data || "", encoding, function () {
-    currentRequest.end(null, null, callback);
-  });
+  // Write data if needed and end
+  if (!data) {
+    this._ended = this._ending = true;
+    this._currentRequest.end(null, null, callback);
+  }
+  else {
+    var self = this;
+    var currentRequest = this._currentRequest;
+    this.write(data, encoding, function () {
+      self._ended = true;
+      currentRequest.end(null, null, callback);
+    });
+    this._ending = true;
+  }
 };
 
 // Sets a header value on the current native request
@@ -137,10 +154,43 @@ RedirectableRequest.prototype.removeHeader = function (name) {
   this._currentRequest.removeHeader(name);
 };
 
+// Global timeout for all underlying requests
+RedirectableRequest.prototype.setTimeout = function (msecs, callback) {
+  if (callback) {
+    this.once("timeout", callback);
+  }
+
+  if (this.socket) {
+    startTimer(this, msecs);
+  }
+  else {
+    var self = this;
+    this._currentRequest.once("socket", function () {
+      startTimer(self, msecs);
+    });
+  }
+
+  this.once("response", clearTimer);
+  this.once("error", clearTimer);
+
+  return this;
+};
+
+function startTimer(request, msecs) {
+  clearTimeout(request._timeout);
+  request._timeout = setTimeout(function () {
+    request.emit("timeout");
+  }, msecs);
+}
+
+function clearTimer() {
+  clearTimeout(this._timeout);
+}
+
 // Proxy all other public ClientRequest methods
 [
   "abort", "flushHeaders", "getHeader",
-  "setNoDelay", "setSocketKeepAlive", "setTimeout",
+  "setNoDelay", "setSocketKeepAlive",
 ].forEach(function (method) {
   RedirectableRequest.prototype[method] = function (a, b) {
     return this._currentRequest[method](a, b);
@@ -190,14 +240,29 @@ RedirectableRequest.prototype._performRequest = function () {
   if (this._isRedirect) {
     // Write the request entity and end.
     var i = 0;
+    var self = this;
     var buffers = this._requestBodyBuffers;
-    (function writeNext() {
-      if (i < buffers.length) {
-        var buffer = buffers[i++];
-        request.write(buffer.data, buffer.encoding, writeNext);
-      }
-      else {
-        request.end();
+    (function writeNext(error) {
+      // Only write if this request has not been redirected yet
+      /* istanbul ignore else */
+      if (request === self._currentRequest) {
+        // Report any write errors
+        /* istanbul ignore if */
+        if (error) {
+          self.emit("error", error);
+        }
+        // Write the next buffer if there are still left
+        else if (i < buffers.length) {
+          var buffer = buffers[i++];
+          /* istanbul ignore else */
+          if (!request.finished) {
+            request.write(buffer.data, buffer.encoding, writeNext);
+          }
+        }
+        // End the request if `end` has been called on us
+        else if (self._ended) {
+          request.end();
+        }
       }
     }());
   }
@@ -223,6 +288,11 @@ RedirectableRequest.prototype._processResponse = function (response) {
   var location = response.headers.location;
   if (location && this._options.followRedirects !== false &&
       response.statusCode >= 300 && response.statusCode < 400) {
+    // Abort the current request
+    this._currentRequest.removeAllListeners();
+    this._currentRequest.on("error", noop);
+    this._currentRequest.abort();
+
     // RFC7231§6.4: A client SHOULD detect and intervene
     // in cyclical redirections (i.e., "infinite" redirection loops).
     if (++this._redirectCount > this._options.maxRedirects) {
@@ -296,27 +366,46 @@ function wrap(protocols) {
     var wrappedProtocol = exports[scheme] = Object.create(nativeProtocol);
 
     // Executes a request, following redirects
-    wrappedProtocol.request = function (options, callback) {
-      if (typeof options === "string") {
-        options = url.parse(options);
-        options.maxRedirects = exports.maxRedirects;
+    wrappedProtocol.request = function (input, options, callback) {
+      // Parse parameters
+      if (typeof input === "string") {
+        var urlStr = input;
+        try {
+          input = urlToOptions(new URL(urlStr));
+        }
+        catch (err) {
+          /* istanbul ignore next */
+          input = url.parse(urlStr);
+        }
+      }
+      else if (URL && (input instanceof URL)) {
+        input = urlToOptions(input);
       }
       else {
-        options = Object.assign({
-          protocol: protocol,
-          maxRedirects: exports.maxRedirects,
-          maxBodyLength: exports.maxBodyLength,
-        }, options);
+        callback = options;
+        options = input;
+        input = { protocol: protocol };
       }
+      if (typeof options === "function") {
+        callback = options;
+        options = null;
+      }
+
+      // Set defaults
+      options = Object.assign({
+        maxRedirects: exports.maxRedirects,
+        maxBodyLength: exports.maxBodyLength,
+      }, input, options);
       options.nativeProtocols = nativeProtocols;
+
       assert.equal(options.protocol, protocol, "protocol mismatch");
       debug("options", options);
       return new RedirectableRequest(options, callback);
     };
 
     // Executes a GET request, following redirects
-    wrappedProtocol.get = function (options, callback) {
-      var request = wrappedProtocol.request(options, callback);
+    wrappedProtocol.get = function (input, options, callback) {
+      var request = wrappedProtocol.request(input, options, callback);
       request.end();
       return request;
     };
@@ -324,19 +413,42 @@ function wrap(protocols) {
   return exports;
 }
 
+/* istanbul ignore next */
+function noop() { /* empty */ }
+
+// from https://github.com/nodejs/node/blob/master/lib/internal/url.js
+function urlToOptions(urlObject) {
+  var options = {
+    protocol: urlObject.protocol,
+    hostname: urlObject.hostname.startsWith("[") ?
+      /* istanbul ignore next */
+      urlObject.hostname.slice(1, -1) :
+      urlObject.hostname,
+    hash: urlObject.hash,
+    search: urlObject.search,
+    pathname: urlObject.pathname,
+    path: urlObject.pathname + urlObject.search,
+    href: urlObject.href,
+  };
+  if (urlObject.port !== "") {
+    options.port = Number(urlObject.port);
+  }
+  return options;
+}
+
 // Exports
 module.exports = wrap({ http: http, https: https });
 module.exports.wrap = wrap;
 
-}, function(modId) {var map = {"http":1562164525183,"https":1562164525184}; return __REQUIRE__(map[modId], modId); })
-__DEFINE__(1562164525183, function(require, module, exports) {
+}, function(modId) {var map = {"http":1562164525147,"https":1562164525148}; return __REQUIRE__(map[modId], modId); })
+__DEFINE__(1562164525147, function(require, module, exports) {
 module.exports = require("./").http;
 
-}, function(modId) { var map = {"./":1562164525182}; return __REQUIRE__(map[modId], modId); })
-__DEFINE__(1562164525184, function(require, module, exports) {
+}, function(modId) { var map = {"./":1562164525146}; return __REQUIRE__(map[modId], modId); })
+__DEFINE__(1562164525148, function(require, module, exports) {
 module.exports = require("./").https;
 
-}, function(modId) { var map = {"./":1562164525182}; return __REQUIRE__(map[modId], modId); })
-return __REQUIRE__(1562164525182);
+}, function(modId) { var map = {"./":1562164525146}; return __REQUIRE__(map[modId], modId); })
+return __REQUIRE__(1562164525146);
 })()
 //# sourceMappingURL=index.js.map
