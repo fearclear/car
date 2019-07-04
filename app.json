@@ -13,18 +13,25 @@
     "backgroundTextStyle": "light"
   },
   "tabBar": {
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "image/home.png",
+        "selectedIconPath": "image/home-sel.png"
       },
       {
         "pagePath": "pages/order/index",
-        "text": "地图"
+        "text": "行程",
+        "iconPath": "image/car.png",
+        "selectedIconPath": "image/car-sel.png"
       },
       {
         "pagePath": "pages/user/index",
-        "text": "个人中心"
+        "text": "个人中心",
+        "iconPath": "image/user.png",
+        "selectedIconPath": "image/user-sel.png"
       }
     ]
   },

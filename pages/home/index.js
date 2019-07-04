@@ -1,7 +1,7 @@
-Component({
-  options: {
-    addGlobalClass: true,
-  },
+Page({
   data: {
+  },
+  onLoad() {
+    
   }
 })
