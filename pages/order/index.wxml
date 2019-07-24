@@ -1,17 +1,15 @@
 <view>
   <view class="map_container">
     <!-- 定义页面结构，可以使用地图组件也能使用其他组件 -->
-    <map 
-    id="map" 
-    subkey="5XEBZ-XJSCP-GZZDM-VSVDM-UVBPK-JFB3O" 
-    longitude="{{longitude}}" 
-    latitude="{{latitude}}" 
-    scale="14" 
-    show-location="true" 
-    markers="{{markers}}" 
-    style="width: 100%; height: 100%;" 
-    bindmarkertap="makertap"
-    polyline="{{polyline}}"
-    ></map>
+    <map id="map" subkey="5XEBZ-XJSCP-GZZDM-VSVDM-UVBPK-JFB3O" longitude="{{longitude}}" latitude="{{latitude}}" scale="14" show-location="true" markers="{{markers}}" style="width: 100%; height: 100%;" bindmarkertap="makertap" polyline="{{polyline}}"></map>
+  </view>
+  <button class="cu-btn bg-blue share-btn" bind:tap="share">生成分享图</button>
+  <view class="cu-modal {{modalName==='Image'?'show':''}}" bind:tap="hideModal" >
+    <view class="cu-dialog">
+      <view class="bg-img" style="background-image: url({{src}});height:200px;"></view>
+      <view>
+        <rich-text nodes="{{nodes}}"></rich-text>
+      </view>
+    </view>
   </view>
 </view>

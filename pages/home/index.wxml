@@ -1,10 +1,3 @@
-<scroll-view scroll-y class="scrollPage">
-  <view class='nav-list'>
-    <navigator open-type="navigate" hover-class='none' url="/pages/basics/{{item.name}}/{{item.name}}" class="nav-li bg-{{item.color}}" wx:for="{{elements}}" wx:key>
-      <view class="nav-title">{{item.title}}</view>
-      <view class="nav-name">{{item.name}}</view>
-      <text class='cuIcon-{{item.icon}}'></text>
-    </navigator>
-  </view>
-  <view class='cu-tabbar-height'></view>
-</scroll-view>
+<div class="cu-bar btn-group">
+  <button class="cu-btn bg-green" bind:tap="sendMsg">发送socket消息</button>
+</div>

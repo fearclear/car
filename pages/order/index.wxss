@@ -5,3 +5,40 @@
   left: 0;
   right: 0;
 }
+
+.share-btn {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.share-wrap {
+  padding: 20rpx 40rpx;
+  background: #fff;
+}
+
+.share-title {
+  font-size: 16px;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #ddd;
+}
+
+.share-content {
+  padding-top: 20rpx;
+  overflow: hidden;
+}
+
+.share-content .content-left,
+.share-content .content-right {
+  float: left;
+}
+
+.share-content .content-left {
+  margin-right: 40rpx;
+}
+
+.share-content .content-right .content-note {
+  color: #666;
+}
+
+

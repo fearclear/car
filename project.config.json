@@ -14,8 +14,8 @@
 		"checkInvalidKey": true
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.4.2",
-	"appid": "wxcdf566a4112fe6d6",
+	"libVersion": "2.7.7",
+	"appid": "wx486593e5100a29ff",
 	"projectname": "car",
 	"debugOptions": {
 		"hidedInDevtools": []
